@@ -1,0 +1,10 @@
+[package]
+name = "venus"
+version = "0.1.0"
+authors = ["Andy Philpotts <andy@failfree.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vulkano="0.18"
