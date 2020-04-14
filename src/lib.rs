@@ -3,16 +3,25 @@ use vulkano::device::Device;
 use vulkano::device::DeviceExtensions;
 use vulkano::device::Features;
 use vulkano::instance::Instance;
-use vulkano::instance::InstanceExtensions;
 use vulkano::instance::PhysicalDevice;
+use vulkano_win::VkSurfaceBuild;
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
 
 static START: Once = Once::new();
 
 pub fn initialize() {
     START.call_once(|| {
         // Setup Vulkano instance
-        let instance = Instance::new(None, &InstanceExtensions::none(), None)
-            .expect("failed to create instance");
+        let instance = {
+            // We need extensions to render in a Window
+            let extensions = vulkano_win::required_extensions();
+            Instance::new(None, &extensions, None).expect("failed to create Vulkan instance")
+        };
+
         println!("Found an instance");
 
         // Find a device that supports Vulcan
@@ -45,8 +54,29 @@ pub fn initialize() {
         let _queue = queues.next().unwrap();
         println!("Found a queue");
 
+        // We need a Window to render in
+        let events_loop = EventLoop::new();
+        let _surface = WindowBuilder::new()
+            .build_vk_surface(&events_loop, instance.clone())
+            .unwrap();
+
         println!("Venus initialized!");
+
+        events_loop.run(|event, _, control_flow| {
+            // Default, busy loop
+            *control_flow = ControlFlow::Poll;
+            match event {
+                Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
+                    *control_flow = ControlFlow::Exit;
+                },
+                _ => ()
+            }
+        });
     })
+}
+
+pub fn run_event_loop() {
+
 }
 
 #[cfg(test)]
