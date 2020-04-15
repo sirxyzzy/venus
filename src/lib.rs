@@ -1,20 +1,28 @@
-use std::sync::Once;
+use std::sync::Arc;
+
 use vulkano::device::Device;
 use vulkano::device::DeviceExtensions;
 use vulkano::device::Features;
+//use vulkano::device::Queue;
+
 use vulkano::instance::Instance;
 use vulkano::instance::PhysicalDevice;
+
+//use vulkano::swapchain::Surface;
+
 use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::WindowBuilder
 };
 
-static START: Once = Once::new();
+pub struct Context {
+    instance: Arc<Instance>
+}
 
-pub fn initialize() {
-    START.call_once(|| {
+impl Context {
+    pub fn new() -> Context {
         // Setup Vulkano instance
         let instance = {
             // We need extensions to render in a Window
@@ -54,15 +62,19 @@ pub fn initialize() {
         let _queue = queues.next().unwrap();
         println!("Found a queue");
 
-        // We need a Window to render in
-        let events_loop = EventLoop::new();
-        let _surface = WindowBuilder::new()
-            .build_vk_surface(&events_loop, instance.clone())
-            .unwrap();
-
         println!("Venus initialized!");
 
-        events_loop.run(|event, _, control_flow| {
+        Context {instance}
+    }
+
+    pub fn run_event_loop(&self) {
+        // We need a Window to render in
+        let event_loop = EventLoop::new();
+        let _surface = WindowBuilder::new()
+            .build_vk_surface(&event_loop, self.instance.clone())
+            .unwrap();
+
+        event_loop.run(|event, _, control_flow| {
             // Default, busy loop
             *control_flow = ControlFlow::Poll;
             match event {
@@ -72,16 +84,12 @@ pub fn initialize() {
                 _ => ()
             }
         });
-    })
-}
-
-pub fn run_event_loop() {
-
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::initialize;
+    use crate::Context;
 
     #[test]
     fn it_works() {
@@ -90,6 +98,7 @@ mod tests {
 
     #[test]
     fn it_initializes() {
-        initialize();
+        let context = Context::new();
+        context.run_event_loop()
     }
 }
